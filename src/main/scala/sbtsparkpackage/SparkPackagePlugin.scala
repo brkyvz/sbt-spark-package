@@ -223,30 +223,16 @@ object SparkPackagePlugin extends AutoPlugin {
 
         IO.delete(zipFile)
         IO.zip(Seq(jar -> (spArtifactName + ".jar"), pom -> (spArtifactName + ".pom")), zipFile)
+        
+        println(s"\nZip File created at: $zipFile\n")
 
         zipFile
       },
-      initialCommands in console :=
-        """ println("Welcome to\n" +
-          |"      ____              __\n" +
-          |"     / __/__  ___ _____/ /__\n" +
-          |"    _\\ \\/ _ \\/ _ `/ __/  '_/\n" +
-          |"   /___/ .__/\\_,_/_/ /_/\\_\\   version \"%s\"\n" +
-          |"      /_/\n" +
-          |"Using Scala \"%s\"\n")
-          |import org.apache.spark.SparkContext
-          |import org.apache.spark.SparkContext._
-          |import org.apache.spark.SparkConf
-          |val conf = new SparkConf()
-          |      .setMaster("local")
-          |      .setAppName("Sbt console + Spark!")
-          |val sc = new SparkContext(conf)
-          |println("Created spark context as sc.")
-        """.format(sparkVersion.value, scalaVersion.value).stripMargin,
-      cleanupCommands in console :=
-        """
-          |sc.stop()
-        """.stripMargin
+      libraryDependencies in Test += "org.apache.spark" %% "spark-repl" % sparkVersion.value,
+      console := {
+        // Use test since Spark is a provided dependency.
+        (runMain in Test).toTask(" org.apache.spark.repl.Main -usejavacp").value
+      }
     )
   }
   
