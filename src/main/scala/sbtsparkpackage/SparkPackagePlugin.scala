@@ -28,7 +28,7 @@ object SparkPackagePlugin extends AutoPlugin {
     val spPackage = taskKey[File]("Packs the Jar including Python files")
     val spMakePom = taskKey[File]("Generates the modified pom file")
     val spPublishLocal = taskKey[Unit]("Publish your package to local ivy repository")
-
+    val replVersion = settingKey[String]("The version of Spark to build against.")
 
     val defaultSPSettings = Seq(
       sparkPackageDependencies := Seq(),
@@ -228,9 +228,13 @@ object SparkPackagePlugin extends AutoPlugin {
 
         zipFile
       },
-      libraryDependencies in Test += "org.apache.spark" %% "spark-repl" % sparkVersion.value,
+      libraryDependencies += "org.apache.spark" %% "spark-repl" % sparkVersion.value % "provided",
+      connectInput in run := true,
+      fork in Test := false,
+      outputStrategy in run := Some (StdoutOutput),
       console := {
         // Use test since Spark is a provided dependency.
+        //(runMain in Test).toTask(" org.apache.spark.repl.Main -Dscala.usejavacp=true").value
         (runMain in Test).toTask(" org.apache.spark.repl.Main -usejavacp").value
       }
     )
